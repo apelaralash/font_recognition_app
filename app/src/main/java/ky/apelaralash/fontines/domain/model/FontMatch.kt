@@ -1,4 +1,4 @@
-package ky.apelaralash.fontines.data.model
+package ky.apelaralash.fontines.domain.model
 
 data class FontMatch(
     val id: String,

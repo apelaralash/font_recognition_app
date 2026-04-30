@@ -1,29 +1,19 @@
 package ky.apelaralash.fontines.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ky.apelaralash.fontines.data.repository.FontRepository
+import ky.apelaralash.fontines.data.repository.FontRepositoryImpl
 import ky.apelaralash.fontines.ui.components.FontMatchItem
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +22,7 @@ fun ResultsScreen(
     onFontClick: (String) -> Unit,
     onBack: () -> Unit
 ) {
-    val repository = remember { FontRepository() }
+    val repository = remember { FontRepositoryImpl() }
     
     // В реальном приложении результаты передавались бы через Navigation
     // Здесь мы просто симулируем загрузку с последним изображением

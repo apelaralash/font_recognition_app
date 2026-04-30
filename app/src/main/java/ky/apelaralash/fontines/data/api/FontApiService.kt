@@ -1,6 +1,7 @@
 package ky.apelaralash.fontines.data.api
 
-import ky.apelaralash.fontines.data.model.FontMatch
+import ky.apelaralash.fontines.data.model.FontRecognitionResponse
+import ky.apelaralash.fontines.domain.model.FontMatch
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
@@ -18,14 +19,6 @@ interface FontApiService {
     @Multipart
     @POST("api/v1/recognize")
     suspend fun recognizeFont(
-        @Part image: okhttp3.MultipartBody.Part
-    ): List<FontMatch>
-    
-    /**
-     * Получение информации о конкретном шрифте
-     * @param fontId идентификатор шрифта
-     * @return информация о шрифте
-     */
-    // @GET("api/v1/fonts/{fontId}")
-    // suspend fun getFontById(@Path("fontId") fontId: String): FontMatch
+        @Part("image") image: okhttp3.MultipartBody.Part
+    ): FontRecognitionResponse
 }

@@ -15,7 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import ky.apelaralash.fontines.data.repository.FontRepository
+import ky.apelaralash.fontines.data.repository.FontRepositoryImpl
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +23,7 @@ fun RecognitionScreen(
     onRecognitionComplete: () -> Unit,
     onBack: () -> Unit
 ) {
-    val repository = remember { FontRepository() }
+    val repository = remember { FontRepositoryImpl() }
     var progress by remember { mutableFloatStateOf(0f) }
     var statusText by remember { mutableStateOf("Подготовка изображения...") }
     

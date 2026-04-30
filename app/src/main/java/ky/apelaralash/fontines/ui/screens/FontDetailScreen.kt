@@ -20,14 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import ky.apelaralash.fontines.data.repository.FontRepository
+import ky.apelaralash.fontines.data.repository.FontRepositoryImpl
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FontDetailScreen(
     onBack: () -> Unit
 ) {
-    val repository = remember { FontRepository() }
+    val repository = remember { FontRepositoryImpl() }
     
     // В реальном приложении ID передавался бы через Navigation arguments
     // Для прототипа просто показываем первый шрифт
