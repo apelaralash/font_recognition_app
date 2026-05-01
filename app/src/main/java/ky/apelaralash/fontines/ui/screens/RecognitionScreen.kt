@@ -14,57 +14,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
-import ky.apelaralash.fontines.data.repository.FontRepositoryImpl
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
+import ky.apelaralash.fontines.domain.model.FontMatch
+import ky.apelaralash.fontines.ui.model.RecognitionUiState
+import ky.apelaralash.fontines.ui.viewmodels.RecognitionViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecognitionScreen(
-    onRecognitionComplete: () -> Unit,
+    viewModel: RecognitionViewModel,
+    onRecognitionComplete: (List<FontMatch>) -> Unit,
     onBack: () -> Unit
 ) {
-    val repository = remember { FontRepositoryImpl() }
-    var progress by remember { mutableFloatStateOf(0f) }
-    var statusText by remember { mutableStateOf("Подготовка изображения...") }
-    
-    // Анимация вращения иконки
-    val infiniteTransition = rememberInfiniteTransition(label = "rotation")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
-    
-    // Симуляция прогресса распознавания
-    LaunchedEffect(Unit) {
-        val steps = listOf(
-            0.2f to "Загрузка изображения...",
-            0.4f to "Анализ текста...",
-            0.6f to "Поиск шрифтов в базе...",
-            0.8f to "Сравнение характеристик...",
-            1.0f to "Завершение..."
-        )
-        
-        steps.forEach { (targetProgress, text) ->
-            statusText = text
-            while (progress < targetProgress) {
-                if (progress > 0.98f) {
-                    progress = 1.0f
-                } else {
-                    progress += 0.02f
-                }
-                delay(100)
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is RecognitionUiState.Success -> {
+                val successState = uiState as RecognitionUiState.Success
+                onRecognitionComplete(successState.fonts)
             }
+            is RecognitionUiState.Error -> {
+                // Show error (you might want to add a snackbar or dialog)
+            }
+            else -> {}
         }
-        
-        delay(500)
-        onRecognitionComplete()
     }
-    
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -84,65 +61,119 @@ fun RecognitionScreen(
             )
         }
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                // Анимированная иконка
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
+        when (uiState) {
+            RecognitionUiState.Idle -> {
+                Box(
                     modifier = Modifier
-                        .size(100.dp)
-                        .rotate(rotation),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                // Статус
-                Text(
-                    text = "Распознавание шрифта",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = statusText,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center
-                )
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                // Прогресс бар
-                LinearProgressIndicator(
-                    progress = { progress },
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            is RecognitionUiState.Loading -> {
+                val loadingState = uiState as RecognitionUiState.Loading
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "rotation")
+                    val rotation by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 360f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(2000, easing = LinearEasing),
+                            repeatMode = RepeatMode.Restart
+                        ),
+                        label = "rotation"
+                    )
+
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        modifier = Modifier.size(100.dp).rotate(rotation),
+                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                    )
+
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text(
+                        text = "Распознавание шрифта",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = loadingState.status,
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(32.dp))
+                    LinearProgressIndicator(
+                        progress = { loadingState.progress },
+                        modifier = Modifier.fillMaxWidth(0.6f).height(8.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "${(loadingState.progress * 100).toInt()}%",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            is RecognitionUiState.Success -> {
+                val successState = uiState as RecognitionUiState.Success
+                LaunchedEffect(successState.fonts) {
+                    onRecognitionComplete(successState.fonts)
+                }
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.6f)
-                        .height(8.dp),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.primaryContainer
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    text = "${(progress * 100).toInt()}%",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium
-                )
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            is RecognitionUiState.Error -> {
+                val errorState = uiState as RecognitionUiState.Error
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Ошибка",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = errorState.message,
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { onBack() }) {
+                            Text("OK")
+                        }
+                    }
+                }
             }
         }
     }

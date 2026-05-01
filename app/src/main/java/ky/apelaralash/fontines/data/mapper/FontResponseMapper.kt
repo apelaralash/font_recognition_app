@@ -5,7 +5,7 @@ import ky.apelaralash.fontines.data.model.FontRecognitionResponse
 import ky.apelaralash.fontines.domain.model.FontMatch
 import javax.inject.Inject
 
-internal class FontResponseMapper @Inject constructor() {
+class FontResponseMapper @Inject constructor() {
 
     fun map(response: FontRecognitionResponse): FontMatch {
         return if (response.result != null) {

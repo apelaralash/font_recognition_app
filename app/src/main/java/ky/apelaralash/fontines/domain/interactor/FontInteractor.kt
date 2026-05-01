@@ -4,7 +4,7 @@ import ky.apelaralash.fontines.domain.model.FontMatch
 import ky.apelaralash.fontines.domain.repository.FontRepository
 import javax.inject.Inject
 
-internal class FontInteractor @Inject constructor(
+class FontInteractor @Inject constructor(
     private val repository: FontRepository
 ) {
 

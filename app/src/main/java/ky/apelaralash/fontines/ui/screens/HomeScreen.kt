@@ -30,36 +30,46 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
+import ky.apelaralash.fontines.ui.model.HomeUiState
+import ky.apelaralash.fontines.ui.viewmodels.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel,
     onNavigateToRecognition: (Uri) -> Unit,
-    onImageSelected: (Uri) -> Unit
 ) {
     val context = LocalContext.current
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val uiState by viewModel.uiState.collectAsState()
+
     var showImagePickerDialog by remember { mutableStateOf(false) }
-    
+
     // Launcher для камеры
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success && selectedImageUri != null) {
-            onNavigateToRecognition(selectedImageUri!!)
+        if (success) {
+            // Handle camera result
+            when (uiState) {
+                is HomeUiState.ImageSelected -> {
+                    onNavigateToRecognition((uiState as HomeUiState.ImageSelected).imageUri)
+                }
+                else -> {}
+            }
         }
     }
-    
+
     // Launcher для галереи
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            selectedImageUri = it
+            viewModel.onImageSelected(it)
             onNavigateToRecognition(it)
         }
     }
-    
+
     // Permission launcher
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -67,11 +77,10 @@ fun HomeScreen(
         if (isGranted) {
             // Создаём временный URI для фото
             val photoUri = createTempImageUri(context)
-            selectedImageUri = photoUri
             cameraLauncher.launch(photoUri)
         }
     }
-    
+
     // Permission launcher для галереи (для Android 12 и ниже)
     val storagePermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -80,7 +89,7 @@ fun HomeScreen(
             galleryLauncher.launch("image/*")
         }
     }
-    
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -102,7 +111,7 @@ fun HomeScreen(
                         )
                     )
             )
-            
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -118,18 +127,18 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.primary,
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 Text(
                     text = "Распознавание шрифтов",
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center
                 )
-                
+
                 Spacer(modifier = Modifier.height(48.dp))
-                
+
                 // Main clickable area
                 Card(
                     modifier = Modifier
@@ -159,9 +168,9 @@ fun HomeScreen(
                                 modifier = Modifier.size(80.dp),
                                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                             )
-                            
+
                             Spacer(modifier = Modifier.height(24.dp))
-                            
+
                             Text(
                                 text = "Нажмите, чтобы\nраспознать шрифт",
                                 fontSize = 18.sp,
@@ -172,9 +181,9 @@ fun HomeScreen(
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(48.dp))
-                
+
                 // Instructions
                 Text(
                     text = "Сфотографируйте текст или выберите\nизображение из галереи",
@@ -185,7 +194,7 @@ fun HomeScreen(
             }
         }
     }
-    
+
     // Image picker dialog
     if (showImagePickerDialog) {
         ImagePickerDialog(
@@ -198,7 +207,6 @@ fun HomeScreen(
                     ) == PackageManager.PERMISSION_GRANTED
                 ) {
                     val photoUri = createTempImageUri(context)
-                    selectedImageUri = photoUri
                     cameraLauncher.launch(photoUri)
                 } else {
                     cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -264,7 +272,7 @@ fun ImagePickerDialog(
                         )
                     }
                 }
-                
+
                 // Gallery option
                 Card(
                     modifier = Modifier

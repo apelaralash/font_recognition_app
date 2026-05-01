@@ -1,5 +1,8 @@
 package ky.apelaralash.fontines.domain.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class FontMatch(
     val id: String,
     val name: String,
@@ -11,7 +14,7 @@ data class FontMatch(
     val license: String? = null,
     val downloadUrl: String? = null,
     val previewUrl: String? = null
-) {
+): java.io.Serializable {
     val similarityPercent: Int
         get() = (similarity * 100).toInt()
 }

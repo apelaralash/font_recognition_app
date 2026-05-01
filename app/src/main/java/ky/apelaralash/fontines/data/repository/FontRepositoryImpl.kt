@@ -14,7 +14,7 @@ import javax.inject.Inject
  * Репозиторий для работы со шрифтами
  * Использует Hilt для внедрения зависимостей
  */
-internal class FontRepositoryImpl @Inject constructor(
+class FontRepositoryImpl @Inject constructor(
     private val fontApiService: FontApiService,
     private val mapper: FontResponseMapper,
 ) : FontRepository {
