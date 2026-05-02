@@ -27,12 +27,14 @@ class FontInteractor @Inject constructor(
         val inputStream = context.contentResolver.openInputStream(imageUri)
             ?: throw FileNotFoundException("Не удалось открыть изображение")
 
+        val mimeType = context.contentResolver.getType(imageUri) ?: "image/jpeg"
+        val mediaType = mimeType.toMediaTypeOrNull() ?: "image/jpeg".toMediaType()
+
         val bytes = inputStream.use { it.readBytes() }
-        val mediaType = "image/*".toMediaTypeOrNull() ?: "image/jpeg".toMediaType()
         val requestBody = bytes.toRequestBody(mediaType, 0, bytes.size)
 
         return MultipartBody.Part.createFormData(
-            "file",
+            "image",
             "image_${System.currentTimeMillis()}.jpg",
             requestBody
         )
