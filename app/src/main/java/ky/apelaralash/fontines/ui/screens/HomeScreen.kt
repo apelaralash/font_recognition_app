@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ky.apelaralash.fontines.ui.model.HomeUiState
 import ky.apelaralash.fontines.ui.viewmodels.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +42,6 @@ fun HomeScreen(
     onNavigateToRecognition: (Uri) -> Unit,
 ) {
     val context = LocalContext.current
-    val uiState by viewModel.uiState.collectAsState()
 
     var showImagePickerDialog by remember { mutableStateOf(false) }
 
@@ -52,7 +50,7 @@ fun HomeScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            val tempUri = createTempImageUri(context)
+            val tempUri = viewModel.createTempImageUri(context)
             onNavigateToRecognition(tempUri) // Передаём URI на следующий экран
         } else {
             // Обработка ошибки съёмки
@@ -66,7 +64,6 @@ fun HomeScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let { selectedUri ->
-            viewModel.onImageSelected(selectedUri)
             onNavigateToRecognition(selectedUri)
         } ?: run {
             // Обработка случая, когда пользователь отменил выбор
@@ -80,7 +77,7 @@ fun HomeScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            val photoUri = createTempImageUri(context)
+            val photoUri = viewModel.createTempImageUri(context)
             cameraLauncher.launch(photoUri)
         } else {
             Toast.makeText(context, "Разрешите доступ к камере", Toast.LENGTH_SHORT).show()
@@ -215,7 +212,7 @@ fun HomeScreen(
                         Manifest.permission.CAMERA
                     ) == PackageManager.PERMISSION_GRANTED
                 ) {
-                    val photoUri = createTempImageUri(context)
+                    val photoUri = viewModel.createTempImageUri(context)
                     cameraLauncher.launch(photoUri)
                 } else {
                     cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -330,21 +327,4 @@ fun ImagePickerDialog(
             }
         }
     )
-}
-
-private fun createTempImageUri(context: android.content.Context): Uri {
-    return try {
-        val file = java.io.File.createTempFile(
-            "temp_image_${System.currentTimeMillis()}",
-            ".jpg",
-            context.cacheDir
-        )
-        androidx.core.content.FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
-    } catch (e: java.io.IOException) {
-        throw RuntimeException("Не удалось создать временный файл", e)
-    }
 }

@@ -2,16 +2,13 @@ package ky.apelaralash.fontines.ui.viewmodels
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
-import ky.apelaralash.fontines.domain.interactor.FontInteractor
-import ky.apelaralash.fontines.domain.model.FontMatch
 import ky.apelaralash.fontines.ui.model.FontDetailUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import ky.apelaralash.fontines.domain.model.FontMatch
 import javax.inject.Inject
 
 /**
@@ -19,6 +16,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class FontDetailViewModel @Inject constructor(
+    private val gson: Gson,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -26,17 +24,18 @@ class FontDetailViewModel @Inject constructor(
     val uiState: StateFlow<FontDetailUiState> = _uiState.asStateFlow()
 
     init {
-        val font = savedStateHandle.get<FontMatch>("font")
-        if (font != null) {
-            setFont(font)
+        val fontJson = savedStateHandle.get<String>("fontJson")
+        if (fontJson != null) {
+            setFont(fontJson)
         }
     }
 
     /**
      * Установка шрифта напрямую (например, из навигации)
-     * @param font объект шрифта
+     * @param fontJson объект шрифта
      */
-    private fun setFont(font: FontMatch) {
+    private fun setFont(fontJson: String) {
+        val font = gson.fromJson(fontJson, FontMatch::class.java)
         _uiState.value = FontDetailUiState.Success(font)
     }
 

@@ -54,26 +54,7 @@ class ResultsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Выбор шрифта для просмотра деталей
-     * @param fontId идентификатор шрифта
-     */
-    fun selectFont(fontId: String) {
-        fontsList.find { it.id == fontId }
-            ?.let { font ->
-                _uiState.value = ResultsUiState.FontSelected(font)
-            }
+    fun createFontJson(font: FontMatch): String {
+        return gson.toJson(font)
     }
-
-    /**
-     * Сброс выбора шрифта
-     */
-    fun clearSelection() {
-        _uiState.value = ResultsUiState.Idle
-    }
-
-    /**
-     * Получение текущих результатов
-     */
-    fun getFonts(): List<FontMatch> = fontsList
 }

@@ -1,5 +1,6 @@
 package ky.apelaralash.fontines.data.repository
 
+import android.R.attr.font
 import android.net.Uri
 import ky.apelaralash.fontines.data.api.FontApiService
 import ky.apelaralash.fontines.data.mapper.FontResponseMapper
@@ -28,8 +29,7 @@ class FontRepositoryImpl @Inject constructor(
     override suspend fun recognizeFont(part: MultipartBody.Part): List<FontMatch> {
         return try {
             // Отправляем запрос к API
-            val font = mapper.map(fontApiService.recognizeFont(part))
-            listOf(font)
+            mapper.map(fontApiService.recognizeFont(part))
         } catch (e: Exception) {
             e.printStackTrace()
             throw e

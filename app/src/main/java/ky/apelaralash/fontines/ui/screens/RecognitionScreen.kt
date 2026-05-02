@@ -31,15 +31,9 @@ fun RecognitionScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState) {
-        when (uiState) {
-            is RecognitionUiState.Success -> {
-                val successState = uiState as RecognitionUiState.Success
-                onRecognitionComplete(successState.fontsJson)
-            }
-            is RecognitionUiState.Error -> {
-                // Show error (you might want to add a snackbar or dialog)
-            }
-            else -> {}
+        if (uiState is RecognitionUiState.Success) {
+            val successState = uiState as RecognitionUiState.Success
+            onRecognitionComplete(successState.fontsJson)
         }
     }
 

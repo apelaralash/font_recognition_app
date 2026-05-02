@@ -6,8 +6,8 @@ data class FontRecognitionResponse(
     val requestId: String,
     @SerializedName("status")
     val status: String,
-    @SerializedName("result")
-    val result: RecognitionResultResponse? = null,
+    @SerializedName("results")
+    val results: List<RecognitionResultResponse> = emptyList(),
     @SerializedName("error")
     val error: Map<String, String>? = null,
     @SerializedName("processed_at")

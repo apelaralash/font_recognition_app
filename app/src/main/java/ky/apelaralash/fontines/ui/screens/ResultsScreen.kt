@@ -53,16 +53,7 @@ fun ResultsScreen(
         }
     ) { padding ->
         when (uiState) {
-            ResultsUiState.Idle -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
+            ResultsUiState.Idle,
             ResultsUiState.Loading -> {
                 Box(
                     modifier = Modifier
@@ -120,7 +111,10 @@ fun ResultsScreen(
                         items(successState.fonts) { font ->
                             FontMatchItem(
                                 fontMatch = font,
-                                onClick = { onFontClick(font.id) }
+                                onClick = {
+                                    val fontJson = viewModel.createFontJson(font)
+                                    onFontClick(fontJson)
+                                }
                             )
                         }
 
@@ -128,19 +122,6 @@ fun ResultsScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
-                }
-            }
-            is ResultsUiState.FontSelected -> {
-                // Handle font selection
-                val selectedFont = (uiState as ResultsUiState.FontSelected).font
-                // UI for selected font can be shown here if needed
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
                 }
             }
             is ResultsUiState.Error -> {
