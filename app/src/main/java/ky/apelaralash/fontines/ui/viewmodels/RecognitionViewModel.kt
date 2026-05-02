@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import ky.apelaralash.fontines.domain.interactor.FontInteractor
 import ky.apelaralash.fontines.domain.model.FontMatch
 import ky.apelaralash.fontines.ui.model.RecognitionUiState
@@ -18,13 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import ky.apelaralash.fontines.ui.navigation.FontMatchArguments
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.FileNotFoundException
 import javax.inject.Inject
 
 /**
@@ -35,6 +29,7 @@ import javax.inject.Inject
 class RecognitionViewModel @Inject constructor(
     private val fontInteractor: FontInteractor,
     private val gson: Gson,
+    @param:ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -61,7 +56,7 @@ class RecognitionViewModel @Inject constructor(
                 simulateProgress()
 
                 // Вызов существующего метода interactor.recognize()
-                val fonts = fontInteractor.recognize(imageUri)
+                val fonts = fontInteractor.recognize(imageUri, context)
                 val fontsJson = gson.toJson(
                     FontMatchArguments(fonts)
                 )
@@ -98,39 +93,5 @@ class RecognitionViewModel @Inject constructor(
      */
     fun reset() {
         _uiState.value = RecognitionUiState.Idle
-    }
-
-    private fun createMultipartPart(context: Context, imageUri: Uri): MultipartBody.Part {
-        // Получаем имя файла
-        val fileName = getFileName(context, imageUri)
-
-        // Открываем InputStream через ContentResolver
-        val inputStream = context.contentResolver.openInputStream(imageUri)
-            ?: throw FileNotFoundException("Не удалось открыть URI: $imageUri")
-
-        // Создаём RequestBody из потока
-        val requestBody = inputStream.use { stream ->
-            val content = stream.readBytes()
-            content.toRequestBody(
-                "image/*".toMediaTypeOrNull() ?: "image/jpeg".toMediaType(),
-                0,
-                content.size
-            )
-        }
-
-        // Создаём MultipartPart
-        return MultipartBody.Part.createFormData(
-            "file", // имя поля в multipart
-            fileName,
-            requestBody
-        )
-    }
-
-    private fun getFileName(context: Context, uri: Uri): String {
-        return context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            cursor.moveToFirst()
-            cursor.getString(nameIndex)
-        } ?: "image.jpg"
     }
 }
