@@ -19,6 +19,6 @@ interface FontApiService {
     @Multipart
     @POST("api/v1/recognize")
     suspend fun recognizeFont(
-        @Part("image") image: okhttp3.MultipartBody.Part
+        @Part image: okhttp3.MultipartBody.Part
     ): FontRecognitionResponse
 }

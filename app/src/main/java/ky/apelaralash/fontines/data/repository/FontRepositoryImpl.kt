@@ -1,5 +1,6 @@
 package ky.apelaralash.fontines.data.repository
 
+import android.net.Uri
 import ky.apelaralash.fontines.data.api.FontApiService
 import ky.apelaralash.fontines.data.mapper.FontResponseMapper
 import ky.apelaralash.fontines.domain.model.FontMatch
@@ -24,17 +25,10 @@ class FontRepositoryImpl @Inject constructor(
      * @param imageUri путь к изображению
      * @return список найденных похожих шрифтов
      */
-    override suspend fun recognizeFont(imageUri: String): List<FontMatch> {
+    override suspend fun recognizeFont(part: MultipartBody.Part): List<FontMatch> {
         return try {
-            // Создаем файл из URI
-            val imageFile = File(imageUri)
-
-            // Создаем RequestBody для изображения
-            val requestFile = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
-            val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, requestFile)
-
             // Отправляем запрос к API
-            val font = mapper.map(fontApiService.recognizeFont(imagePart))
+            val font = mapper.map(fontApiService.recognizeFont(part))
             listOf(font)
         } catch (e: Exception) {
             e.printStackTrace()

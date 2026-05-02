@@ -27,21 +27,20 @@ import kotlin.jvm.java
 import kotlin.reflect.typeOf
 import kotlin.to
 
+@Serializable
 sealed class Screen(val route: String) {
 
     @Serializable
     data object Home : Screen("home")
 
     @Serializable
-    data class Recognition(val imageUri: String) : Screen("recognition/{$imageUri}")
+    data class Recognition(val imageUri: String) : Screen("recognition/$imageUri")
 
     @Serializable
-    data class Results(val fonts: FontMatchArguments) : Screen("results")
+    data class Results(val fontsJson: String) : Screen("results/$fontsJson")
 
     @Serializable
-    data object FontDetail : Screen("font_detail/{fontId}") {
-        fun createRoute(fontId: String) = "font_detail/$fontId"
-    }
+    data class FontDetail(val fontId: String) : Screen("font_detail/$fontId")
 }
 
 fun NavGraphBuilder.fontinesGraph(
@@ -57,16 +56,12 @@ fun NavGraphBuilder.fontinesGraph(
         )
     }
 
-    composable<Screen.Recognition>(
-        typeMap = mapOf(
-            typeOf<FontMatchArguments>() to navType<FontMatchArguments>()
-        )
-    ) {
+    composable<Screen.Recognition> {
         val viewModel: RecognitionViewModel = hiltViewModel()
         RecognitionScreen(
             viewModel = viewModel,
-            onRecognitionComplete = { fonts ->
-                navController.navigate(Screen.Results(FontMatchArguments(fonts))) {
+            onRecognitionComplete = { fontsJson ->
+                navController.navigate(Screen.Results(fontsJson)) {
                     popUpTo(Screen.Home.route) { inclusive = false }
                 }
             },
@@ -81,7 +76,7 @@ fun NavGraphBuilder.fontinesGraph(
         ResultsScreen(
             viewModel = viewModel,
             onFontClick = { fontId ->
-                navController.navigate(Screen.FontDetail.createRoute(fontId))
+                navController.navigate(Screen.FontDetail(fontId))
             },
             onBack = {
                 navController.popBackStack(Screen.Home.route, inclusive = false)
@@ -97,40 +92,5 @@ fun NavGraphBuilder.fontinesGraph(
                 navController.popBackStack()
             }
         )
-    }
-}
-
-inline fun <reified T : java.io.Serializable?> navType(
-    isNullableAllowed: Boolean = false,
-    gson: Gson = Gson(),
-) = object : NavType<T>(isNullableAllowed = isNullableAllowed) {
-    override fun get(bundle: Bundle, key: String): T? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            bundle.getSerializable(key, T::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            bundle.getSerializable(key) as? T
-        }
-    }
-
-    override fun parseValue(value: String): T {
-        val deserializedResult = gson.fromJson(value, T::class.java)
-        return deserializedResult
-    }
-
-    override fun serializeAsValue(value: T): String {
-        return if (value == null) {
-            ""
-        } else {
-            gson.toJson(value)
-        }
-    }
-
-    override fun put(bundle: Bundle, key: String, value: T) {
-        if (value == null) {
-            bundle.putSerializable(key, null)
-        } else {
-            bundle.putSerializable(key, value)
-        }
     }
 }

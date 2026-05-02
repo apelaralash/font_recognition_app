@@ -1,5 +1,7 @@
 package ky.apelaralash.fontines.di
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -60,5 +62,12 @@ object NetworkModule {
     @Singleton
     fun provideFontApiService(retrofit: Retrofit): FontApiService {
         return retrofit.create(FontApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return GsonBuilder()
+            .create()
     }
 }

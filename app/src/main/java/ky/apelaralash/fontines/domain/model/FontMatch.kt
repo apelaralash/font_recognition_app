@@ -14,7 +14,7 @@ data class FontMatch(
     val license: String? = null,
     val downloadUrl: String? = null,
     val previewUrl: String? = null
-): java.io.Serializable {
+) {
     val similarityPercent: Int
         get() = (similarity * 100).toInt()
 }

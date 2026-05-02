@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import ky.apelaralash.fontines.ui.navigation.Screen
 import ky.apelaralash.fontines.ui.navigation.fontinesGraph
 import ky.apelaralash.fontines.ui.theme.FontinesTheme
 
@@ -37,7 +38,7 @@ fun FontinesApp() {
     ) {
         NavHost(
             navController = navController,
-            startDestination = "home"
+            startDestination = Screen.Home
         ) {
             fontinesGraph(navController)
         }

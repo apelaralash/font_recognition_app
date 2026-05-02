@@ -5,11 +5,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.parcelize)
 }
 
 android {
     namespace = "ky.apelaralash.fontines"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "ky.apelaralash.fontines"

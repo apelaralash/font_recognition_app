@@ -3,6 +3,8 @@ package ky.apelaralash.fontines.ui.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -50,36 +52,41 @@ fun HomeScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            // Handle camera result
-            when (uiState) {
-                is HomeUiState.ImageSelected -> {
-                    onNavigateToRecognition((uiState as HomeUiState.ImageSelected).imageUri)
-                }
-                else -> {}
-            }
+            val tempUri = createTempImageUri(context)
+            onNavigateToRecognition(tempUri) // Передаём URI на следующий экран
+        } else {
+            // Обработка ошибки съёмки
+            Toast.makeText(context, "Не удалось сделать фото", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     // Launcher для галереи
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let {
-            viewModel.onImageSelected(it)
-            onNavigateToRecognition(it)
+        uri?.let { selectedUri ->
+            viewModel.onImageSelected(selectedUri)
+            onNavigateToRecognition(selectedUri)
+        } ?: run {
+            // Обработка случая, когда пользователь отменил выбор
+            Toast.makeText(context, "Изображение не выбрано", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // Permission launcher
+
+    // Permission launcher для камеры
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Создаём временный URI для фото
             val photoUri = createTempImageUri(context)
             cameraLauncher.launch(photoUri)
+        } else {
+            Toast.makeText(context, "Разрешите доступ к камере", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     // Permission launcher для галереи (для Android 12 и ниже)
     val storagePermissionLauncher = rememberLauncherForActivityResult(
@@ -87,8 +94,11 @@ fun HomeScreen(
     ) { isGranted ->
         if (isGranted) {
             galleryLauncher.launch("image/*")
+        } else {
+            Toast.makeText(context, "Разрешите доступ к галерее", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -200,7 +210,6 @@ fun HomeScreen(
         ImagePickerDialog(
             onCameraClick = {
                 showImagePickerDialog = false
-                // Проверяем разрешение на камеру
                 if (ContextCompat.checkSelfPermission(
                         context,
                         Manifest.permission.CAMERA
@@ -214,12 +223,21 @@ fun HomeScreen(
             },
             onGalleryClick = {
                 showImagePickerDialog = false
-                // Для Android 13+ не нужно разрешение для чтения изображений
-                galleryLauncher.launch("image/*")
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        galleryLauncher.launch("image/*")
+                    } else {
+                        storagePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    }
+                } else {
+                    galleryLauncher.launch("image/*")
+                }
             },
-            onDismiss = {
-                showImagePickerDialog = false
-            }
+            onDismiss = { showImagePickerDialog = false }
         )
     }
 }
@@ -315,14 +333,18 @@ fun ImagePickerDialog(
 }
 
 private fun createTempImageUri(context: android.content.Context): Uri {
-    val file = java.io.File.createTempFile(
-        "temp_image_${System.currentTimeMillis()}",
-        ".jpg",
-        context.cacheDir
-    )
-    return androidx.core.content.FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        file
-    )
+    return try {
+        val file = java.io.File.createTempFile(
+            "temp_image_${System.currentTimeMillis()}",
+            ".jpg",
+            context.cacheDir
+        )
+        androidx.core.content.FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+    } catch (e: java.io.IOException) {
+        throw RuntimeException("Не удалось создать временный файл", e)
+    }
 }

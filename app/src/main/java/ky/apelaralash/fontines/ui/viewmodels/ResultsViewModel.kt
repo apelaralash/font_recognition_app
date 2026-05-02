@@ -3,17 +3,15 @@ package ky.apelaralash.fontines.ui.viewmodels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import dagger.hilt.android.lifecycle.HiltViewModel
-import ky.apelaralash.fontines.domain.interactor.FontInteractor
 import ky.apelaralash.fontines.domain.model.FontMatch
 import ky.apelaralash.fontines.ui.model.ResultsUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import ky.apelaralash.fontines.ui.navigation.FontMatchArguments
 import javax.inject.Inject
 
 /**
@@ -22,7 +20,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class ResultsViewModel @Inject constructor(
-    private val savedStateHandle: SavedStateHandle
+    private val gson: Gson,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ResultsUiState>(ResultsUiState.Idle)
@@ -31,7 +30,7 @@ class ResultsViewModel @Inject constructor(
     private var fontsList: List<FontMatch> = emptyList()
 
     init {
-        val fontsJson = savedStateHandle.get<List<FontMatch>>("fonts")
+        val fontsJson = savedStateHandle.get<String>("fontsJson")
         if (fontsJson != null) {
             loadResults(fontsJson)
         }
@@ -41,12 +40,13 @@ class ResultsViewModel @Inject constructor(
      * Загрузка результатов распознавания
      * @param recognitionResults результаты распознавания
      */
-    private fun loadResults(recognitionResults: List<FontMatch>) {
+    private fun loadResults(recognitionResults: String) {
         viewModelScope.launch {
             _uiState.value = ResultsUiState.Loading
 
             try {
-                fontsList = recognitionResults
+                val args = gson.fromJson(recognitionResults, FontMatchArguments::class.java)
+                fontsList = args.fonts
                 _uiState.value = ResultsUiState.Success(fontsList)
             } catch (e: Exception) {
                 _uiState.value = ResultsUiState.Error(e.message ?: "Ошибка загрузки")

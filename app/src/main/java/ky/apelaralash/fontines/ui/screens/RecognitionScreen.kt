@@ -1,5 +1,6 @@
 package ky.apelaralash.fontines.ui.screens
 
+import android.R.attr.rotation
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -24,7 +25,7 @@ import ky.apelaralash.fontines.ui.viewmodels.RecognitionViewModel
 @Composable
 fun RecognitionScreen(
     viewModel: RecognitionViewModel,
-    onRecognitionComplete: (List<FontMatch>) -> Unit,
+    onRecognitionComplete: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -33,7 +34,7 @@ fun RecognitionScreen(
         when (uiState) {
             is RecognitionUiState.Success -> {
                 val successState = uiState as RecognitionUiState.Success
-                onRecognitionComplete(successState.fonts)
+                onRecognitionComplete(successState.fontsJson)
             }
             is RecognitionUiState.Error -> {
                 // Show error (you might want to add a snackbar or dialog)
@@ -74,66 +75,83 @@ fun RecognitionScreen(
             }
             is RecognitionUiState.Loading -> {
                 val loadingState = uiState as RecognitionUiState.Loading
+                val infiniteTransition = rememberInfiniteTransition(label = "rotation")
+                val rotation by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 360f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(2000, easing = LinearEasing),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "rotation"
+                )
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
                 ) {
-                    val infiniteTransition = rememberInfiniteTransition(label = "rotation")
-                    val rotation by infiniteTransition.animateFloat(
-                        initialValue = 0f,
-                        targetValue = 360f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(2000, easing = LinearEasing),
-                            repeatMode = RepeatMode.Restart
-                        ),
-                        label = "rotation"
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        // Анимированная иконка
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(100.dp)
+                                .rotate(rotation),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                        )
 
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = null,
-                        modifier = Modifier.size(100.dp).rotate(rotation),
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                    )
+                        Spacer(modifier = Modifier.height(32.dp))
 
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Text(
-                        text = "Распознавание шрифта",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+                        // Статус
+                        Text(
+                            text = "Распознавание шрифта",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = loadingState.status,
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center
-                    )
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                    Spacer(modifier = Modifier.height(32.dp))
-                    LinearProgressIndicator(
-                        progress = { loadingState.progress },
-                        modifier = Modifier.fillMaxWidth(0.6f).height(8.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                        Text(
+                            text = loadingState.status,
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center
+                        )
 
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "${(loadingState.progress * 100).toInt()}%",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Medium
-                    )
+                        Spacer(modifier = Modifier.height(32.dp))
+
+                        // Прогресс бар
+                        LinearProgressIndicator(
+                            progress = { loadingState.progress },
+                            modifier = Modifier
+                                .fillMaxWidth(0.6f)
+                                .height(8.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.primaryContainer
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "${(loadingState.progress * 100).toInt()}%",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
             is RecognitionUiState.Success -> {
                 val successState = uiState as RecognitionUiState.Success
-                LaunchedEffect(successState.fonts) {
-                    onRecognitionComplete(successState.fonts)
+                LaunchedEffect(successState.fontsJson) {
+                    onRecognitionComplete(successState.fontsJson)
                 }
                 Box(
                     modifier = Modifier
