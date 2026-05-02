@@ -17,7 +17,7 @@ interface FontApiService {
      * @return список найденных похожих шрифтов
      */
     @Multipart
-    @POST("api/v1/recognize")
+    @POST("api/v1/fonts/recognize")
     suspend fun recognizeFont(
         @Part image: okhttp3.MultipartBody.Part
     ): FontRecognitionResponse
